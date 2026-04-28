@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppRevenueRouteImport } from './routes/_app/revenue'
 import { Route as AppProjectsRouteImport } from './routes/_app/projects'
 import { Route as AppMeetingsRouteImport } from './routes/_app/meetings'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
@@ -30,6 +31,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppRevenueRoute = AppRevenueRouteImport.update({
+  id: '/revenue',
+  path: '/revenue',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppProjectsRoute = AppProjectsRouteImport.update({
   id: '/projects',
@@ -58,6 +64,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AppDashboardRoute
   '/meetings': typeof AppMeetingsRoute
   '/projects': typeof AppProjectsRouteWithChildren
+  '/revenue': typeof AppRevenueRoute
   '/projects/$projectId': typeof AppProjectsProjectIdRoute
 }
 export interface FileRoutesByTo {
@@ -66,6 +73,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AppDashboardRoute
   '/meetings': typeof AppMeetingsRoute
   '/projects': typeof AppProjectsRouteWithChildren
+  '/revenue': typeof AppRevenueRoute
   '/projects/$projectId': typeof AppProjectsProjectIdRoute
 }
 export interface FileRoutesById {
@@ -76,6 +84,7 @@ export interface FileRoutesById {
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/meetings': typeof AppMeetingsRoute
   '/_app/projects': typeof AppProjectsRouteWithChildren
+  '/_app/revenue': typeof AppRevenueRoute
   '/_app/projects/$projectId': typeof AppProjectsProjectIdRoute
 }
 export interface FileRouteTypes {
@@ -86,6 +95,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/meetings'
     | '/projects'
+    | '/revenue'
     | '/projects/$projectId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -94,6 +104,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/meetings'
     | '/projects'
+    | '/revenue'
     | '/projects/$projectId'
   id:
     | '__root__'
@@ -103,6 +114,7 @@ export interface FileRouteTypes {
     | '/_app/dashboard'
     | '/_app/meetings'
     | '/_app/projects'
+    | '/_app/revenue'
     | '/_app/projects/$projectId'
   fileRoutesById: FileRoutesById
 }
@@ -134,6 +146,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_app/revenue': {
+      id: '/_app/revenue'
+      path: '/revenue'
+      fullPath: '/revenue'
+      preLoaderRoute: typeof AppRevenueRouteImport
+      parentRoute: typeof AppRoute
     }
     '/_app/projects': {
       id: '/_app/projects'
@@ -182,12 +201,14 @@ interface AppRouteChildren {
   AppDashboardRoute: typeof AppDashboardRoute
   AppMeetingsRoute: typeof AppMeetingsRoute
   AppProjectsRoute: typeof AppProjectsRouteWithChildren
+  AppRevenueRoute: typeof AppRevenueRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppDashboardRoute: AppDashboardRoute,
   AppMeetingsRoute: AppMeetingsRoute,
   AppProjectsRoute: AppProjectsRouteWithChildren,
+  AppRevenueRoute: AppRevenueRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
