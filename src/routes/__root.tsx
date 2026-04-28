@@ -34,10 +34,14 @@ export const Route = createRootRoute({
       { title: "Freelance OS — your personal productivity HQ" },
       { name: "description", content: "Manage freelance projects, deadlines, meetings & revenue with smart voice alerts and an AI assistant." },
       { name: "author", content: "Freelance OS" },
-      { property: "og:title", content: "Freelance OS" },
-      { property: "og:description", content: "Projects, deadlines, meetings, revenue, AI — all in one beautiful workspace." },
+      { property: "og:title", content: "Freelance OS — your personal productivity HQ" },
+      { property: "og:description", content: "Manage freelance projects, deadlines, meetings & revenue with smart voice alerts and an AI assistant." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+      { name: "twitter:title", content: "Freelance OS — your personal productivity HQ" },
+      { name: "twitter:description", content: "Manage freelance projects, deadlines, meetings & revenue with smart voice alerts and an AI assistant." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/d06bc463-3877-499f-bc4f-33913273a8f0/id-preview-b1949d84--67df6bad-67c3-4d11-8c6a-7ab8410c8ef1.lovable.app-1777409304031.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/d06bc463-3877-499f-bc4f-33913273a8f0/id-preview-b1949d84--67df6bad-67c3-4d11-8c6a-7ab8410c8ef1.lovable.app-1777409304031.png" },
     ],
     links: [
       {
