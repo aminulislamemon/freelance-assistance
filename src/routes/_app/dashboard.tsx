@@ -18,7 +18,7 @@ export const Route = createFileRoute("/_app/dashboard")({
   component: Dashboard,
 });
 
-type Project = { id: string; title: string; client_name: string | null; price: number; deadline: string | null; status: string };
+type Project = { id: string; title: string; client_name: string | null; price: number; deadline: string | null; status: string; completed_at: string | null };
 type Meeting = { id: string; title: string; client_name: string | null; starts_at: string };
 
 const TIPS = [
@@ -66,12 +66,12 @@ function Dashboard() {
     const lastMonth = (thisMonth + 11) % 12;
     const lastMonthYear = thisMonth === 0 ? thisYear - 1 : thisYear;
     const sum = (arr: Project[]) => arr.reduce((s, p) => s + Number(p.price), 0);
-    const completedThisMonth = projects.filter(
-      (p) => p.status === "completed" && p.completed_at_safe(now, thisMonth, thisYear),
-    );
-    const completedLastMonth = projects.filter(
-      (p) => p.status === "completed" && p.completed_at_safe(now, lastMonth, lastMonthYear),
-    );
+    const inMonth = (p: Project, m: number, y: number) => {
+      const d = p.completed_at ? new Date(p.completed_at) : p.deadline ? new Date(p.deadline) : null;
+      return !!d && d.getMonth() === m && d.getFullYear() === y;
+    };
+    const completedThisMonth = projects.filter((p) => p.status === "completed" && inMonth(p, thisMonth, thisYear));
+    const completedLastMonth = projects.filter((p) => p.status === "completed" && inMonth(p, lastMonth, lastMonthYear));
     return {
       monthRevenue: sum(completedThisMonth),
       lastMonthRevenue: sum(completedLastMonth),
@@ -81,8 +81,6 @@ function Dashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projects]);
 
-  // patch monkey-helper above by adding it via prototype-less util:
-  // (handled below using a plain helper to avoid messy code)
   const upcoming = projects
     .filter((p) => p.status !== "completed" && p.status !== "cancelled" && p.deadline)
     .sort((a, b) => new Date(a.deadline!).getTime() - new Date(b.deadline!).getTime())
@@ -282,12 +280,3 @@ const SkeletonRows = () => (
   </div>
 );
 const Empty = ({ text }: { text: string }) => <div className="text-sm text-muted-foreground py-8 text-center">{text}</div>;
-
-// Helper attached to Project to avoid noisy inline date math.
-declare module "react" {} // no-op
-;(function attach() {
-  // @ts-ignore
-  if (!("completed_at_safe" in {} as any)) {
-    // We can't attach to plain objects safely; replace usage with explicit fn:
-  }
-})();
