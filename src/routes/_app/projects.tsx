@@ -135,8 +135,7 @@ function ProjectsPage() {
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
       {/* Header */}
-      <div className="relative overflow-hidden rounded-3xl glass-strong p-7 ring-gradient">
-        <div className="absolute -top-20 -right-10 size-64 rounded-full opacity-30 blur-3xl [background:var(--gradient-primary)] animate-aurora" />
+      <div className="relative rounded-3xl glass-strong p-7 ring-gradient aurora-bg">
         <div className="relative flex items-end justify-between gap-3 flex-wrap">
           <div>
             <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary/60 px-3 py-1 text-xs text-muted-foreground">

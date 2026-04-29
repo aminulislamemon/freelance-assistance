@@ -7,11 +7,12 @@ import { Button } from "@/components/ui/button";
 import {
   ArrowUpRight, CheckCircle2, Clock, Wallet, FolderKanban, CalendarClock,
   BellRing, Sparkles, TrendingUp, Lightbulb, Zap, Target, Coffee, Trophy,
-  AlarmClock, Users,
+  AlarmClock, Users, Newspaper, ExternalLink, Tag,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { unlockAudio, requestNotifyPermission, playSound, speak } from "@/lib/notifications";
 import { toast } from "sonner";
+import { getTechBlogs, type BlogPost } from "@/server/tech-blogs.functions";
 
 export const Route = createFileRoute("/_app/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — Freelance OS" }] }),
@@ -42,6 +43,8 @@ function Dashboard() {
   const [displayName, setDisplayName] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [tipIdx, setTipIdx] = useState(0);
+  const [blogs, setBlogs] = useState<BlogPost[]>([]);
+  const [blogsLoading, setBlogsLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
@@ -58,6 +61,13 @@ function Dashboard() {
       setLoading(false);
     })();
   }, [user]);
+
+  useEffect(() => {
+    getTechBlogs()
+      .then((r) => setBlogs(r.posts))
+      .catch(() => setBlogs([]))
+      .finally(() => setBlogsLoading(false));
+  }, []);
 
   const now = new Date();
   const stats = useMemo(() => {
@@ -109,9 +119,7 @@ function Dashboard() {
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
       {/* Hero */}
-      <div className="relative overflow-hidden rounded-3xl glass-strong p-7 md:p-9 ring-gradient">
-        <div className="absolute -top-20 -right-10 size-72 rounded-full opacity-40 blur-3xl [background:var(--gradient-primary)] animate-aurora" />
-        <div className="absolute -bottom-24 -left-10 size-80 rounded-full opacity-30 blur-3xl [background:var(--gradient-emerald)] animate-aurora" style={{ animationDelay: "3s" }} />
+      <div className="relative rounded-3xl glass-strong p-7 md:p-9 ring-gradient aurora-bg">
         <div className="relative flex items-end justify-between flex-wrap gap-4">
           <div>
             <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary/60 px-3 py-1 text-xs text-muted-foreground">
@@ -233,7 +241,79 @@ function Dashboard() {
           ))}
         </div>
       </Card>
+
+      {/* Tech Blogs */}
+      <Card className="glass border-0 p-6 animate-rise aurora-bg" style={{ animationDelay: "260ms" }}>
+        <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
+          <div className="flex items-center gap-3">
+            <div className="size-10 rounded-xl [background:var(--gradient-primary)] grid place-items-center shadow-[var(--shadow-glow)]">
+              <Newspaper className="size-5 text-primary-foreground" />
+            </div>
+            <div>
+              <h2 className="font-semibold text-lg">Fresh tech & conversion blogs</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">Curated daily — analytics, growth, AI, web dev</p>
+            </div>
+          </div>
+          <Button variant="glass" size="sm" onClick={() => { setBlogsLoading(true); getTechBlogs().then(r => setBlogs(r.posts)).finally(() => setBlogsLoading(false)); }}>
+            <Sparkles className="size-3.5" /> Refresh
+          </Button>
+        </div>
+        {blogsLoading ? (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {[0,1,2,3,4,5].map(i => <div key={i} className="h-44 rounded-2xl bg-secondary/40 animate-pulse" />)}
+          </div>
+        ) : blogs.length === 0 ? (
+          <Empty text="Couldn't fetch blogs right now. Try refresh." />
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {blogs.slice(0, 6).map((b, i) => <BlogCard key={b.id} b={b} i={i} />)}
+          </div>
+        )}
+      </Card>
     </div>
+  );
+}
+
+function BlogCard({ b, i }: { b: BlogPost; i: number }) {
+  return (
+    <a
+      href={b.url}
+      target="_blank"
+      rel="noreferrer"
+      className="group rounded-2xl bg-secondary/40 hover:bg-secondary transition-all hover:-translate-y-1 hover:shadow-[var(--shadow-glow)] overflow-hidden flex flex-col animate-rise"
+      style={{ animationDelay: `${i * 60}ms` }}
+    >
+      <div className="relative aspect-[16/9] overflow-hidden bg-gradient-to-br from-[--primary]/20 to-[--accent-emerald]/20">
+        {b.cover ? (
+          <img src={b.cover} alt="" loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+        ) : (
+          <div className="w-full h-full grid place-items-center">
+            <Newspaper className="size-10 text-primary opacity-50" />
+          </div>
+        )}
+        <span className="absolute top-2 left-2 inline-flex items-center gap-1 rounded-full bg-background/80 backdrop-blur px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider">
+          {b.source}
+        </span>
+      </div>
+      <div className="p-4 flex-1 flex flex-col">
+        <h3 className="font-semibold text-sm leading-snug line-clamp-2 group-hover:text-primary transition-colors">
+          {b.title}
+        </h3>
+        <p className="text-xs text-muted-foreground mt-1.5 line-clamp-2">{b.description}</p>
+        <div className="mt-auto pt-3 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+            {b.tags.slice(0, 2).map((t) => (
+              <span key={t} className="inline-flex items-center gap-0.5 rounded-full bg-[--primary]/10 text-[--primary] px-1.5 py-0.5 text-[10px]">
+                <Tag className="size-2.5" />{t}
+              </span>
+            ))}
+          </div>
+          <span className="text-[10px] text-muted-foreground inline-flex items-center gap-1 shrink-0">
+            {b.readingMinutes}m <ExternalLink className="size-3" />
+          </span>
+        </div>
+      </div>
+    </a>
   );
 }
 
