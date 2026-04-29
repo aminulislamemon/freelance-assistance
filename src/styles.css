@@ -242,6 +242,38 @@
 @utility ring-gradient {
   position: relative;
 }
+
+@utility aurora-bg {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+@utility aurora-bg {
+  &::before, &::after {
+    content: "";
+    position: absolute;
+    border-radius: 9999px;
+    filter: blur(80px);
+    pointer-events: none;
+    z-index: -1;
+    will-change: transform, opacity;
+  }
+  &::before {
+    width: 520px; height: 520px;
+    top: -160px; left: -120px;
+    background: var(--gradient-primary);
+    opacity: 0.28;
+    animation: aurora-slow 26s ease-in-out infinite;
+  }
+  &::after {
+    width: 600px; height: 600px;
+    bottom: -200px; right: -160px;
+    background: var(--gradient-emerald);
+    opacity: 0.24;
+    animation: drift 22s ease-in-out infinite;
+    animation-delay: -6s;
+  }
+}
 @utility ring-gradient {
   &::before {
     content: "";
