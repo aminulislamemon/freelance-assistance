@@ -170,7 +170,9 @@
   --animate-rise: rise 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
   --animate-float: float 6s ease-in-out infinite;
   --animate-shimmer: shimmer 2.5s linear infinite;
-  --animate-aurora: aurora 12s ease-in-out infinite;
+  --animate-aurora: aurora 18s ease-in-out infinite;
+  --animate-aurora-slow: aurora-slow 26s ease-in-out infinite;
+  --animate-drift: drift 22s ease-in-out infinite;
   --animate-pulse-ring: pulse-ring 2s ease-out infinite;
 }
 
@@ -191,8 +193,17 @@
   100% { background-position: 200% 0; }
 }
 @keyframes aurora {
-  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.55; }
-  50% { transform: translate(20px, -10px) scale(1.08); opacity: 0.8; }
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.5; }
+  50% { transform: translate(24px, -14px) scale(1.1); opacity: 0.78; }
+}
+@keyframes aurora-slow {
+  0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 0.45; }
+  33% { transform: translate(-30px, 20px) scale(1.08) rotate(8deg); opacity: 0.7; }
+  66% { transform: translate(25px, -18px) scale(1.12) rotate(-6deg); opacity: 0.6; }
+}
+@keyframes drift {
+  0%, 100% { transform: translate3d(0,0,0) scale(1); }
+  50% { transform: translate3d(40px,-30px,0) scale(1.15); }
 }
 @keyframes pulse-ring {
   0% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--primary) 60%, transparent); }
