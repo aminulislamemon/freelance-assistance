@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { playSound, speak } from "@/lib/notifications";
+import { playSound, speak, pushNative } from "@/lib/notifications";
 import { toast } from "sonner";
 
 type Project = { id: string; title: string; client_name: string | null; deadline: string | null; status: string };
@@ -9,12 +9,13 @@ type Meeting = { id: string; title: string; client_name: string | null; starts_a
 
 const WINDOWS_HOURS = [24, 12, 3];
 const MEETING_WINDOWS_MIN = [15, 5];
+const POLL_MS = 30_000; // poll every 30s for tighter windows
 
 const fmtTime = (d: Date) =>
   d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 
 /**
- * Polls deadlines & meetings every 60s and fires sound + voice + toast
+ * Polls deadlines & meetings and fires sound + voice + toast + native push
  * the first time we cross a threshold. Persists fired keys in localStorage.
  */
 export function useNotifier() {
@@ -33,8 +34,14 @@ export function useNotifier() {
     const tick = async () => {
       const now = Date.now();
       const [{ data: projects }, { data: meetings }] = await Promise.all([
-        supabase.from("projects").select("id,title,client_name,deadline,status").neq("status", "completed"),
-        supabase.from("meetings").select("id,title,client_name,starts_at").gte("starts_at", new Date(now - 5 * 60 * 1000).toISOString()),
+        supabase
+          .from("projects")
+          .select("id,title,client_name,deadline,status")
+          .not("status", "in", "(completed,cancelled)"),
+        supabase
+          .from("meetings")
+          .select("id,title,client_name,starts_at")
+          .gte("starts_at", new Date(now - 5 * 60 * 1000).toISOString()),
       ]);
 
       if (cancelled) return;
@@ -46,11 +53,13 @@ export function useNotifier() {
         for (const h of WINDOWS_HOURS) {
           const winMs = h * 3600 * 1000;
           const key = `d:${p.id}:${h}`;
-          if (ms <= winMs && ms > winMs - 90 * 1000 && !fired.current.has(key)) {
+          // wider catch window (3 min) so 30s polling doesn't miss it
+          if (ms <= winMs && ms > winMs - 3 * 60 * 1000 && !fired.current.has(key)) {
             fired.current.add(key);
             playSound("deadline");
             speak(`Heads up. ${h} hours left until your ${p.title} deadline.`);
             toast.warning(`Deadline in ${h}h`, { description: p.title });
+            pushNative(`Deadline in ${h}h`, p.title);
           }
         }
       });
@@ -67,6 +76,7 @@ export function useNotifier() {
             const who = m.client_name ? `with ${m.client_name}` : "";
             speak(`You have a meeting ${who} at ${fmtTime(new Date(m.starts_at))}. Starting in ${min} minutes.`);
             toast.info(`Meeting in ${min} min`, { description: m.title });
+            pushNative(`Meeting in ${min} min`, m.title);
           }
         }
       });
@@ -77,10 +87,14 @@ export function useNotifier() {
     };
 
     tick();
-    const id = setInterval(tick, 60_000);
+    const id = setInterval(tick, POLL_MS);
+    // also tick when tab regains focus
+    const onFocus = () => tick();
+    window.addEventListener("focus", onFocus);
     return () => {
       cancelled = true;
       clearInterval(id);
+      window.removeEventListener("focus", onFocus);
     };
   }, [user]);
 }
