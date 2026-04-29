@@ -170,6 +170,8 @@
   --animate-rise: rise 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
   --animate-float: float 6s ease-in-out infinite;
   --animate-shimmer: shimmer 2.5s linear infinite;
+  --animate-aurora: aurora 12s ease-in-out infinite;
+  --animate-pulse-ring: pulse-ring 2s ease-out infinite;
 }
 
 @keyframes fade-in {
@@ -187,6 +189,15 @@
 @keyframes shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
+}
+@keyframes aurora {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.55; }
+  50% { transform: translate(20px, -10px) scale(1.08); opacity: 0.8; }
+}
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--primary) 60%, transparent); }
+  70% { box-shadow: 0 0 0 14px color-mix(in oklab, var(--primary) 0%, transparent); }
+  100% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--primary) 0%, transparent); }
 }
 
 @utility glass {
@@ -208,4 +219,41 @@
 }
 @utility hover-lift {
   &:hover { transform: translateY(-4px); box-shadow: var(--shadow-glow); }
+}
+
+@utility glass-strong {
+  background: color-mix(in oklab, var(--card) 85%, transparent);
+  backdrop-filter: blur(24px) saturate(140%);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
+  border: 1px solid color-mix(in oklab, var(--border) 80%, transparent);
+}
+
+@utility ring-gradient {
+  position: relative;
+}
+@utility ring-gradient {
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, color-mix(in oklab, var(--primary) 60%, transparent), color-mix(in oklab, var(--accent-emerald) 60%, transparent));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+}
+
+/* Fancy calendar polish */
+.rdp-button_previous, .rdp-button_next { border-radius: 9999px !important; }
+[data-slot="calendar"] .rdp-day_button:hover {
+  background: color-mix(in oklab, var(--primary) 18%, transparent);
+  color: var(--foreground);
+}
+[data-slot="calendar"] [data-selected-single="true"] {
+  background-image: var(--gradient-primary) !important;
+  box-shadow: var(--shadow-glow);
 }

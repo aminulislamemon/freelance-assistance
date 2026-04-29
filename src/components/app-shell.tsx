@@ -9,6 +9,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { useTheme } from "@/hooks/use-theme";
 import { cn } from "@/lib/utils";
 import { useNotifier } from "@/hooks/use-notifier";
+import { unlockAudio, requestNotifyPermission } from "@/lib/notifications";
+import { toast } from "sonner";
 
 const items = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -96,7 +98,16 @@ export function AppShell() {
             <Button variant="ghost" size="icon" onClick={toggle} title="Toggle theme">
               {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
             </Button>
-            <Button variant="ghost" size="icon" title="Notifications enabled">
+            <Button
+              variant="ghost"
+              size="icon"
+              title="Enable alerts"
+              onClick={async () => {
+                unlockAudio();
+                const p = await requestNotifyPermission();
+                toast.success(p === "granted" ? "Alerts enabled" : "In-app alerts on");
+              }}
+            >
               <Bell className="size-4" />
             </Button>
             <div className="hidden sm:flex items-center gap-2 ml-2 pl-3 border-l border-border">
