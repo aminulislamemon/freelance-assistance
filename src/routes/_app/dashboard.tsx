@@ -45,29 +45,35 @@ function Dashboard() {
   const [tipIdx, setTipIdx] = useState(0);
   const [blogs, setBlogs] = useState<BlogPost[]>([]);
   const [blogsLoading, setBlogsLoading] = useState(true);
+  const [profession, setProfession] = useState<string | null>(null);
+  const [interests, setInterests] = useState<string[]>([]);
 
   useEffect(() => {
     (async () => {
       const [{ data: ps }, { data: ms }, { data: prof }] = await Promise.all([
         supabase.from("projects").select("*").order("created_at", { ascending: false }),
         supabase.from("meetings").select("*").gte("starts_at", new Date().toISOString()).order("starts_at").limit(5),
-        user ? supabase.from("profiles").select("display_name").eq("id", user.id).maybeSingle() : Promise.resolve({ data: null } as any),
+        user ? supabase.from("profiles").select("display_name, profession, interests").eq("id", user.id).maybeSingle() : Promise.resolve({ data: null } as any),
       ]);
       setProjects((ps as Project[]) ?? []);
       setMeetings((ms as Meeting[]) ?? []);
       const name = (prof?.display_name as string | undefined) || user?.email?.split("@")[0] || "there";
       // first name only
       setDisplayName(name.split(/[\s.]+/)[0]);
+      setProfession((prof?.profession as string | null) ?? null);
+      setInterests(((prof?.interests as string[] | null) ?? []));
       setLoading(false);
     })();
   }, [user]);
 
   useEffect(() => {
-    getTechBlogs()
-      .then((r) => setBlogs(r.posts))
+    if (loading) return; // wait for profile load to know interests
+    setBlogsLoading(true);
+    getTechBlogs({ data: { interests, profession: profession ?? undefined } })
+      .then((r) => setBlogs(r.posts ?? []))
       .catch(() => setBlogs([]))
       .finally(() => setBlogsLoading(false));
-  }, []);
+  }, [loading, profession, interests]);
 
   const now = new Date();
   const stats = useMemo(() => {
