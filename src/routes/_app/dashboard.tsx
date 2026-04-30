@@ -260,7 +260,13 @@ function Dashboard() {
               <p className="text-xs text-muted-foreground mt-0.5">Curated daily — analytics, growth, AI, web dev</p>
             </div>
           </div>
-          <Button variant="glass" size="sm" onClick={() => { setBlogsLoading(true); getTechBlogs().then(r => setBlogs(r.posts)).finally(() => setBlogsLoading(false)); }}>
+          <Button variant="glass" size="sm" onClick={() => {
+            setBlogsLoading(true);
+            getTechBlogs({ data: { interests, profession: profession ?? undefined } })
+              .then((r) => setBlogs(r.posts ?? []))
+              .catch(() => setBlogs([]))
+              .finally(() => setBlogsLoading(false));
+          }}>
             <Sparkles className="size-3.5" /> Refresh
           </Button>
         </div>
