@@ -7,12 +7,13 @@ import { Button } from "@/components/ui/button";
 import {
   ArrowUpRight, CheckCircle2, Clock, Wallet, FolderKanban, CalendarClock,
   BellRing, Sparkles, TrendingUp, Lightbulb, Zap, Target, Coffee, Trophy,
-  AlarmClock, Users, Newspaper, ExternalLink, Tag,
+  AlarmClock, Users, Newspaper, ExternalLink, Tag, RefreshCw, AlertTriangle, WifiOff,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { unlockAudio, requestNotifyPermission, playSound, speak } from "@/lib/notifications";
 import { toast } from "sonner";
 import { getTechBlogs, type BlogPost } from "@/server/tech-blogs.functions";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // Client-side fallback: hit dev.to directly if server fn fails
 const TAG_MAP: Record<string, string[]> = {
@@ -91,6 +92,7 @@ function Dashboard() {
   const [tipIdx, setTipIdx] = useState(0);
   const [blogs, setBlogs] = useState<BlogPost[]>([]);
   const [blogsLoading, setBlogsLoading] = useState(true);
+  const [blogsError, setBlogsError] = useState<string | null>(null);
   const [profession, setProfession] = useState<string | null>(null);
   const [interests, setInterests] = useState<string[]>([]);
 
@@ -114,27 +116,49 @@ function Dashboard() {
 
   useEffect(() => {
     if (loading) return; // wait for profile load to know interests
-    setBlogsLoading(true);
     let cancelled = false;
-    (async () => {
-      try {
-        const r = await getTechBlogs({ data: { interests, profession: profession ?? undefined } });
-        if (cancelled) return;
-        if (r.posts && r.posts.length > 0) {
-          setBlogs(r.posts);
-          setBlogsLoading(false);
-          return;
-        }
-      } catch {}
-      // Fallback: fetch from client
-      const posts = await fetchBlogsClient(interests, profession);
-      if (!cancelled) {
-        setBlogs(posts);
-        setBlogsLoading(false);
-      }
-    })();
+    loadBlogs(() => cancelled);
     return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, profession, interests]);
+
+  async function loadBlogs(isCancelled: () => boolean = () => false) {
+    setBlogsLoading(true);
+    setBlogsError(null);
+    let serverFailed = false;
+    try {
+      const r = await getTechBlogs({ data: { interests, profession: profession ?? undefined } });
+      if (isCancelled()) return;
+      if (r.posts && r.posts.length > 0) {
+        setBlogs(r.posts);
+        setBlogsLoading(false);
+        return;
+      }
+    } catch {
+      serverFailed = true;
+    }
+    try {
+      const posts = await fetchBlogsClient(interests, profession);
+      if (isCancelled()) return;
+      if (posts.length === 0) {
+        setBlogs([]);
+        setBlogsError(
+          serverFailed
+            ? "We couldn't reach the blog service. Check your connection and try again."
+            : "No fresh articles came back this time. Give it another try in a moment.",
+        );
+      } else {
+        setBlogs(posts);
+      }
+    } catch {
+      if (!isCancelled()) {
+        setBlogs([]);
+        setBlogsError("We couldn't load blogs right now. Please retry.");
+      }
+    } finally {
+      if (!isCancelled()) setBlogsLoading(false);
+    }
+  }
 
   const now = new Date();
   const stats = useMemo(() => {
@@ -325,31 +349,87 @@ function Dashboard() {
               </p>
             </div>
           </div>
-          <Button variant="glass" size="sm" onClick={() => {
-            setBlogsLoading(true);
-            getTechBlogs({ data: { interests, profession: profession ?? undefined } })
-              .then(async (r) => {
-                if (r.posts && r.posts.length > 0) setBlogs(r.posts);
-                else setBlogs(await fetchBlogsClient(interests, profession));
-              })
-              .catch(async () => setBlogs(await fetchBlogsClient(interests, profession)))
-              .finally(() => setBlogsLoading(false));
-          }}>
-            <Sparkles className="size-3.5" /> Refresh
+          <Button
+            variant="glass"
+            size="sm"
+            disabled={blogsLoading}
+            onClick={() => loadBlogs()}
+          >
+            <RefreshCw className={cn("size-3.5", blogsLoading && "animate-spin")} />
+            {blogsLoading ? "Refreshing…" : "Refresh"}
           </Button>
         </div>
         {blogsLoading ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {[0,1,2,3,4,5].map(i => <div key={i} className="h-44 rounded-2xl bg-secondary/40 animate-pulse" />)}
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-busy="true" aria-live="polite">
+            {[0,1,2,3,4,5].map(i => <BlogSkeleton key={i} />)}
           </div>
+        ) : blogsError ? (
+          <BlogsError message={blogsError} onRetry={() => loadBlogs()} />
         ) : blogs.length === 0 ? (
-          <Empty text="Couldn't fetch blogs right now. Try refresh." />
+          <BlogsError
+            message="No articles matched your interests yet. Try refreshing."
+            onRetry={() => loadBlogs()}
+            variant="empty"
+          />
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {blogs.slice(0, 6).map((b, i) => <BlogCard key={b.id} b={b} i={i} />)}
           </div>
         )}
       </Card>
+    </div>
+  );
+}
+
+function BlogSkeleton() {
+  return (
+    <div className="rounded-2xl border border-border/60 bg-card/50 overflow-hidden">
+      <Skeleton className="h-32 w-full rounded-none" />
+      <div className="p-4 space-y-3">
+        <div className="flex gap-2">
+          <Skeleton className="h-4 w-14 rounded-full" />
+          <Skeleton className="h-4 w-10 rounded-full" />
+        </div>
+        <Skeleton className="h-4 w-[92%]" />
+        <Skeleton className="h-4 w-[70%]" />
+        <div className="flex items-center justify-between pt-2">
+          <Skeleton className="h-3 w-24" />
+          <Skeleton className="h-3 w-12" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BlogsError({
+  message,
+  onRetry,
+  variant = "error",
+}: {
+  message: string;
+  onRetry: () => void;
+  variant?: "error" | "empty";
+}) {
+  const Icon = variant === "error" ? WifiOff : AlertTriangle;
+  return (
+    <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/30 p-8 sm:p-10 text-center flex flex-col items-center gap-3">
+      <div className={cn(
+        "size-12 rounded-2xl grid place-items-center",
+        variant === "error"
+          ? "bg-destructive/10 text-destructive"
+          : "bg-primary/10 text-primary",
+      )}>
+        <Icon className="size-6" />
+      </div>
+      <div className="space-y-1">
+        <h3 className="font-semibold text-sm sm:text-base">
+          {variant === "error" ? "Couldn't load fresh blogs" : "Nothing fresh yet"}
+        </h3>
+        <p className="text-sm text-muted-foreground max-w-md mx-auto">{message}</p>
+      </div>
+      <Button variant="hero" size="sm" onClick={onRetry} className="mt-1">
+        <RefreshCw className="size-3.5" /> Try again
+      </Button>
     </div>
   );
 }
