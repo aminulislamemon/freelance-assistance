@@ -125,25 +125,25 @@ function Dashboard() {
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
       {/* Hero */}
-      <div className="relative rounded-3xl glass-strong p-7 md:p-9 ring-gradient aurora-bg">
+      <div className="relative rounded-3xl glass-strong p-5 sm:p-7 md:p-9 ring-gradient aurora-bg">
         <div className="relative flex items-end justify-between flex-wrap gap-4">
           <div>
             <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary/60 px-3 py-1 text-xs text-muted-foreground">
               <Sparkles className="size-3 text-primary" /> {now.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" })}
             </span>
-            <h1 className="mt-3 text-3xl md:text-4xl font-bold tracking-tight">
+            <h1 className="mt-3 text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight">
               {greet(displayName || "there")} <span className="inline-block animate-float">✨</span>
             </h1>
-            <p className="text-muted-foreground mt-2 max-w-xl">
+            <p className="text-muted-foreground mt-2 max-w-xl text-sm sm:text-base">
               Your studio at a glance — deadlines, meetings and revenue all in one calm view. Let's make today count.
             </p>
           </div>
-          <div className="flex gap-2">
-            <Button variant="glass" onClick={enableAlerts} className="relative">
+          <div className="flex gap-2 flex-wrap">
+            <Button variant="glass" onClick={enableAlerts} className="relative" size="sm">
               <BellRing className="size-4" /> Enable alerts
               <span className="absolute -top-1 -right-1 size-2 rounded-full bg-[--accent-emerald] animate-pulse-ring" />
             </Button>
-            <Link to="/projects"><Button variant="hero"><Sparkles className="size-4" /> New project</Button></Link>
+            <Link to="/projects"><Button variant="hero" size="sm"><Sparkles className="size-4" /> New project</Button></Link>
           </div>
         </div>
       </div>
