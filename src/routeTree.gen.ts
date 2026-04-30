@@ -15,8 +15,10 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as AppRevenueRouteImport } from './routes/_app/revenue'
 import { Route as AppProjectsRouteImport } from './routes/_app/projects'
+import { Route as AppOnboardingRouteImport } from './routes/_app/onboarding'
 import { Route as AppMeetingsRouteImport } from './routes/_app/meetings'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
+import { Route as AppCalendarRouteImport } from './routes/_app/calendar'
 import { Route as AppAssistantRouteImport } from './routes/_app/assistant'
 import { Route as AppProjectsProjectIdRouteImport } from './routes/_app/projects.$projectId'
 
@@ -49,6 +51,11 @@ const AppProjectsRoute = AppProjectsRouteImport.update({
   path: '/projects',
   getParentRoute: () => AppRoute,
 } as any)
+const AppOnboardingRoute = AppOnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppMeetingsRoute = AppMeetingsRouteImport.update({
   id: '/meetings',
   path: '/meetings',
@@ -57,6 +64,11 @@ const AppMeetingsRoute = AppMeetingsRouteImport.update({
 const AppDashboardRoute = AppDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCalendarRoute = AppCalendarRouteImport.update({
+  id: '/calendar',
+  path: '/calendar',
   getParentRoute: () => AppRoute,
 } as any)
 const AppAssistantRoute = AppAssistantRouteImport.update({
@@ -74,8 +86,10 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/assistant': typeof AppAssistantRoute
+  '/calendar': typeof AppCalendarRoute
   '/dashboard': typeof AppDashboardRoute
   '/meetings': typeof AppMeetingsRoute
+  '/onboarding': typeof AppOnboardingRoute
   '/projects': typeof AppProjectsRouteWithChildren
   '/revenue': typeof AppRevenueRoute
   '/settings': typeof AppSettingsRoute
@@ -85,8 +99,10 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/assistant': typeof AppAssistantRoute
+  '/calendar': typeof AppCalendarRoute
   '/dashboard': typeof AppDashboardRoute
   '/meetings': typeof AppMeetingsRoute
+  '/onboarding': typeof AppOnboardingRoute
   '/projects': typeof AppProjectsRouteWithChildren
   '/revenue': typeof AppRevenueRoute
   '/settings': typeof AppSettingsRoute
@@ -98,8 +114,10 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
   '/_app/assistant': typeof AppAssistantRoute
+  '/_app/calendar': typeof AppCalendarRoute
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/meetings': typeof AppMeetingsRoute
+  '/_app/onboarding': typeof AppOnboardingRoute
   '/_app/projects': typeof AppProjectsRouteWithChildren
   '/_app/revenue': typeof AppRevenueRoute
   '/_app/settings': typeof AppSettingsRoute
@@ -111,8 +129,10 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/assistant'
+    | '/calendar'
     | '/dashboard'
     | '/meetings'
+    | '/onboarding'
     | '/projects'
     | '/revenue'
     | '/settings'
@@ -122,8 +142,10 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/assistant'
+    | '/calendar'
     | '/dashboard'
     | '/meetings'
+    | '/onboarding'
     | '/projects'
     | '/revenue'
     | '/settings'
@@ -134,8 +156,10 @@ export interface FileRouteTypes {
     | '/_app'
     | '/auth'
     | '/_app/assistant'
+    | '/_app/calendar'
     | '/_app/dashboard'
     | '/_app/meetings'
+    | '/_app/onboarding'
     | '/_app/projects'
     | '/_app/revenue'
     | '/_app/settings'
@@ -192,6 +216,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProjectsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/onboarding': {
+      id: '/_app/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof AppOnboardingRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/meetings': {
       id: '/_app/meetings'
       path: '/meetings'
@@ -204,6 +235,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AppDashboardRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/calendar': {
+      id: '/_app/calendar'
+      path: '/calendar'
+      fullPath: '/calendar'
+      preLoaderRoute: typeof AppCalendarRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/assistant': {
@@ -237,8 +275,10 @@ const AppProjectsRouteWithChildren = AppProjectsRoute._addFileChildren(
 
 interface AppRouteChildren {
   AppAssistantRoute: typeof AppAssistantRoute
+  AppCalendarRoute: typeof AppCalendarRoute
   AppDashboardRoute: typeof AppDashboardRoute
   AppMeetingsRoute: typeof AppMeetingsRoute
+  AppOnboardingRoute: typeof AppOnboardingRoute
   AppProjectsRoute: typeof AppProjectsRouteWithChildren
   AppRevenueRoute: typeof AppRevenueRoute
   AppSettingsRoute: typeof AppSettingsRoute
@@ -246,8 +286,10 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppAssistantRoute: AppAssistantRoute,
+  AppCalendarRoute: AppCalendarRoute,
   AppDashboardRoute: AppDashboardRoute,
   AppMeetingsRoute: AppMeetingsRoute,
+  AppOnboardingRoute: AppOnboardingRoute,
   AppProjectsRoute: AppProjectsRouteWithChildren,
   AppRevenueRoute: AppRevenueRoute,
   AppSettingsRoute: AppSettingsRoute,
@@ -263,3 +305,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}

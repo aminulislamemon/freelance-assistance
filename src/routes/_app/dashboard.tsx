@@ -14,6 +14,52 @@ import { unlockAudio, requestNotifyPermission, playSound, speak } from "@/lib/no
 import { toast } from "sonner";
 import { getTechBlogs, type BlogPost } from "@/server/tech-blogs.functions";
 
+// Client-side fallback: hit dev.to directly if server fn fails
+const TAG_MAP: Record<string, string[]> = {
+  conversion: ["conversion", "growth"], ai: ["ai", "machinelearning"], growth: ["growth", "startup"],
+  productivity: ["productivity", "career"], marketing: ["marketing", "seo"], webdev: ["webdev", "javascript"],
+  design: ["design", "ux"], freelance: ["freelance", "career"], career: ["career", "productivity"],
+  money: ["business", "freelance"], tools: ["tools", "productivity"], saas: ["saas", "startup"],
+  designer: ["design", "ux"], developer: ["webdev", "javascript"], writer: ["writing", "content"],
+  marketer: ["marketing", "growth"], consultant: ["business", "career"], analyst: ["data", "analytics"],
+  ecommerce: ["ecommerce", "shopify"], coach: ["productivity", "career"], photographer: ["creative"],
+  videographer: ["creative", "video"], podcaster: ["podcast"],
+};
+async function fetchBlogsClient(interests: string[], profession: string | null): Promise<BlogPost[]> {
+  const ids = [...interests, ...(profession ? [profession] : [])];
+  let tags = Array.from(new Set(ids.flatMap((id) => TAG_MAP[id] ?? [])));
+  if (tags.length === 0) tags = ["webdev", "productivity", "ai", "growth", "marketing"];
+  tags = tags.slice(0, 5);
+  const all: BlogPost[] = [];
+  const seen = new Set<string>();
+  await Promise.all(tags.map(async (tag) => {
+    try {
+      const r = await fetch(`https://dev.to/api/articles?tag=${encodeURIComponent(tag)}&per_page=6&top=14`);
+      if (!r.ok) return;
+      const json = await r.json() as any[];
+      for (const a of json) {
+        const url = a.url ?? a.canonical_url;
+        if (!url || seen.has(url)) continue;
+        seen.add(url);
+        all.push({
+          id: String(a.id),
+          title: a.title ?? "Untitled",
+          description: (a.description ?? "").slice(0, 220),
+          url,
+          cover: a.cover_image ?? a.social_image ?? null,
+          author: a.user?.name ?? "Unknown",
+          source: "dev.to",
+          tags: Array.isArray(a.tag_list) ? a.tag_list.slice(0, 3) : [],
+          publishedAt: a.published_at ?? new Date().toISOString(),
+          readingMinutes: Number(a.reading_time_minutes ?? 4),
+        });
+      }
+    } catch {}
+  }));
+  all.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+  return all.slice(0, 12);
+}
+
 export const Route = createFileRoute("/_app/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — Freelance OS" }] }),
   component: Dashboard,
@@ -45,29 +91,50 @@ function Dashboard() {
   const [tipIdx, setTipIdx] = useState(0);
   const [blogs, setBlogs] = useState<BlogPost[]>([]);
   const [blogsLoading, setBlogsLoading] = useState(true);
+  const [profession, setProfession] = useState<string | null>(null);
+  const [interests, setInterests] = useState<string[]>([]);
 
   useEffect(() => {
     (async () => {
       const [{ data: ps }, { data: ms }, { data: prof }] = await Promise.all([
         supabase.from("projects").select("*").order("created_at", { ascending: false }),
         supabase.from("meetings").select("*").gte("starts_at", new Date().toISOString()).order("starts_at").limit(5),
-        user ? supabase.from("profiles").select("display_name").eq("id", user.id).maybeSingle() : Promise.resolve({ data: null } as any),
+        user ? supabase.from("profiles").select("display_name, profession, interests").eq("id", user.id).maybeSingle() : Promise.resolve({ data: null } as any),
       ]);
       setProjects((ps as Project[]) ?? []);
       setMeetings((ms as Meeting[]) ?? []);
       const name = (prof?.display_name as string | undefined) || user?.email?.split("@")[0] || "there";
       // first name only
       setDisplayName(name.split(/[\s.]+/)[0]);
+      setProfession((prof?.profession as string | null) ?? null);
+      setInterests(((prof?.interests as string[] | null) ?? []));
       setLoading(false);
     })();
   }, [user]);
 
   useEffect(() => {
-    getTechBlogs()
-      .then((r) => setBlogs(r.posts))
-      .catch(() => setBlogs([]))
-      .finally(() => setBlogsLoading(false));
-  }, []);
+    if (loading) return; // wait for profile load to know interests
+    setBlogsLoading(true);
+    let cancelled = false;
+    (async () => {
+      try {
+        const r = await getTechBlogs({ data: { interests, profession: profession ?? undefined } });
+        if (cancelled) return;
+        if (r.posts && r.posts.length > 0) {
+          setBlogs(r.posts);
+          setBlogsLoading(false);
+          return;
+        }
+      } catch {}
+      // Fallback: fetch from client
+      const posts = await fetchBlogsClient(interests, profession);
+      if (!cancelled) {
+        setBlogs(posts);
+        setBlogsLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [loading, profession, interests]);
 
   const now = new Date();
   const stats = useMemo(() => {
@@ -119,25 +186,25 @@ function Dashboard() {
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
       {/* Hero */}
-      <div className="relative rounded-3xl glass-strong p-7 md:p-9 ring-gradient aurora-bg">
+      <div className="relative rounded-3xl glass-strong p-5 sm:p-7 md:p-9 ring-gradient aurora-bg">
         <div className="relative flex items-end justify-between flex-wrap gap-4">
           <div>
             <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary/60 px-3 py-1 text-xs text-muted-foreground">
               <Sparkles className="size-3 text-primary" /> {now.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" })}
             </span>
-            <h1 className="mt-3 text-3xl md:text-4xl font-bold tracking-tight">
+            <h1 className="mt-3 text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight">
               {greet(displayName || "there")} <span className="inline-block animate-float">✨</span>
             </h1>
-            <p className="text-muted-foreground mt-2 max-w-xl">
+            <p className="text-muted-foreground mt-2 max-w-xl text-sm sm:text-base">
               Your studio at a glance — deadlines, meetings and revenue all in one calm view. Let's make today count.
             </p>
           </div>
-          <div className="flex gap-2">
-            <Button variant="glass" onClick={enableAlerts} className="relative">
+          <div className="flex gap-2 flex-wrap">
+            <Button variant="glass" onClick={enableAlerts} className="relative" size="sm">
               <BellRing className="size-4" /> Enable alerts
               <span className="absolute -top-1 -right-1 size-2 rounded-full bg-[--accent-emerald] animate-pulse-ring" />
             </Button>
-            <Link to="/projects"><Button variant="hero"><Sparkles className="size-4" /> New project</Button></Link>
+            <Link to="/projects"><Button variant="hero" size="sm"><Sparkles className="size-4" /> New project</Button></Link>
           </div>
         </div>
       </div>
@@ -243,18 +310,31 @@ function Dashboard() {
       </Card>
 
       {/* Tech Blogs */}
-      <Card className="glass border-0 p-6 animate-rise aurora-bg" style={{ animationDelay: "260ms" }}>
+      <Card className="glass border-0 p-4 sm:p-6 animate-rise aurora-bg" style={{ animationDelay: "260ms" }}>
         <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
           <div className="flex items-center gap-3">
             <div className="size-10 rounded-xl [background:var(--gradient-primary)] grid place-items-center shadow-[var(--shadow-glow)]">
               <Newspaper className="size-5 text-primary-foreground" />
             </div>
             <div>
-              <h2 className="font-semibold text-lg">Fresh tech & conversion blogs</h2>
-              <p className="text-xs text-muted-foreground mt-0.5">Curated daily — analytics, growth, AI, web dev</p>
+              <h2 className="font-semibold text-base sm:text-lg">Fresh blogs for you</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {interests.length > 0
+                  ? `Curated for: ${interests.slice(0, 3).join(", ")}${interests.length > 3 ? "…" : ""}`
+                  : "Curated daily — analytics, growth, AI, web dev"}
+              </p>
             </div>
           </div>
-          <Button variant="glass" size="sm" onClick={() => { setBlogsLoading(true); getTechBlogs().then(r => setBlogs(r.posts)).finally(() => setBlogsLoading(false)); }}>
+          <Button variant="glass" size="sm" onClick={() => {
+            setBlogsLoading(true);
+            getTechBlogs({ data: { interests, profession: profession ?? undefined } })
+              .then(async (r) => {
+                if (r.posts && r.posts.length > 0) setBlogs(r.posts);
+                else setBlogs(await fetchBlogsClient(interests, profession));
+              })
+              .catch(async () => setBlogs(await fetchBlogsClient(interests, profession)))
+              .finally(() => setBlogsLoading(false));
+          }}>
             <Sparkles className="size-3.5" /> Refresh
           </Button>
         </div>

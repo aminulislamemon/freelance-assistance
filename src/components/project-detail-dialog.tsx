@@ -8,6 +8,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { Plus, Trash2, Clock, DollarSign, User2, Calendar as CalIcon, Pencil, Save, X } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button as Btn } from "@/components/ui/button";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { playSound } from "@/lib/notifications";
 
@@ -103,6 +108,13 @@ export function ProjectDetailDialog({
   const ms = project?.deadline ? new Date(project.deadline).getTime() - Date.now() : null;
   const hours = ms !== null ? Math.max(0, Math.round(ms / 3600000)) : null;
 
+  const updateDeadline = async (date: Date | undefined) => {
+    if (!projectId) return;
+    await supabase.from("projects").update({ deadline: date ? date.toISOString() : null }).eq("id", projectId);
+    toast.success(date ? `Deadline set to ${format(date, "PP")}` : "Deadline cleared");
+    reload();
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl glass-strong border-0 max-h-[90vh] overflow-y-auto">
@@ -125,7 +137,35 @@ export function ProjectDetailDialog({
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-2">
               <Stat icon={User2} label="Client" value={project.client_name ?? "—"} />
               <Stat icon={DollarSign} label="Price" value={`$${Number(project.price).toLocaleString()}`} />
-              <Stat icon={CalIcon} label="Deadline" value={project.deadline ? new Date(project.deadline).toLocaleDateString([], { month: "short", day: "numeric" }) : "—"} />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="rounded-xl bg-secondary/50 p-3 text-left hover:bg-secondary transition-colors group">
+                    <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">
+                      <CalIcon className="size-3" /> Deadline
+                      <Pencil className="size-2.5 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
+                    <div className="mt-1 font-semibold text-sm truncate">
+                      {project.deadline ? new Date(project.deadline).toLocaleDateString([], { month: "short", day: "numeric" }) : "Set date"}
+                    </div>
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 glass-strong border-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={project.deadline ? new Date(project.deadline) : undefined}
+                    onSelect={(d) => updateDeadline(d ?? undefined)}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                  {project.deadline && (
+                    <div className="p-2 border-t border-border">
+                      <Btn variant="ghost" size="sm" className="w-full" onClick={() => updateDeadline(undefined)}>
+                        Clear deadline
+                      </Btn>
+                    </div>
+                  )}
+                </PopoverContent>
+              </Popover>
               <Stat icon={Clock} label="Time left" value={hours !== null ? (hours < 24 ? `${hours}h` : `${Math.round(hours / 24)}d`) : "—"} />
             </div>
 

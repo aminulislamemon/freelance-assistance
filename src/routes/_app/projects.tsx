@@ -340,6 +340,15 @@ function ProjectRow({
                   <span className="text-muted-foreground/70">• {new Date(p.deadline).toLocaleDateString([], { month: "short", day: "numeric" })}</span>
                 </span>
               )}
+              {!p.deadline && (
+                <button
+                  className="inline-flex items-center gap-1 rounded-full bg-[--primary]/10 text-[--primary] px-2 py-0.5 text-[11px] hover:bg-[--primary]/20 transition-colors"
+                  onClick={(e) => { e.stopPropagation(); onOpen(); }}
+                  title="Add a deadline"
+                >
+                  <CalendarIcon className="size-3" /> Add deadline
+                </button>
+              )}
             </div>
             {p.description && (
               <p className="text-sm text-muted-foreground/90 mt-2 line-clamp-1">{p.description}</p>
