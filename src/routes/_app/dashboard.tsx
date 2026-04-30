@@ -328,8 +328,11 @@ function Dashboard() {
           <Button variant="glass" size="sm" onClick={() => {
             setBlogsLoading(true);
             getTechBlogs({ data: { interests, profession: profession ?? undefined } })
-              .then((r) => setBlogs(r.posts ?? []))
-              .catch(() => setBlogs([]))
+              .then(async (r) => {
+                if (r.posts && r.posts.length > 0) setBlogs(r.posts);
+                else setBlogs(await fetchBlogsClient(interests, profession));
+              })
+              .catch(async () => setBlogs(await fetchBlogsClient(interests, profession)))
               .finally(() => setBlogsLoading(false));
           }}>
             <Sparkles className="size-3.5" /> Refresh
