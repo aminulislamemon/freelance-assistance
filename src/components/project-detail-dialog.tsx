@@ -8,6 +8,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { Plus, Trash2, Clock, DollarSign, User2, Calendar as CalIcon, Pencil, Save, X } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button as Btn } from "@/components/ui/button";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { playSound } from "@/lib/notifications";
 
@@ -102,6 +107,13 @@ export function ProjectDetailDialog({
   const pct = tasks.length ? (done / tasks.length) * 100 : 0;
   const ms = project?.deadline ? new Date(project.deadline).getTime() - Date.now() : null;
   const hours = ms !== null ? Math.max(0, Math.round(ms / 3600000)) : null;
+
+  const updateDeadline = async (date: Date | undefined) => {
+    if (!projectId) return;
+    await supabase.from("projects").update({ deadline: date ? date.toISOString() : null }).eq("id", projectId);
+    toast.success(date ? `Deadline set to ${format(date, "PP")}` : "Deadline cleared");
+    reload();
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
