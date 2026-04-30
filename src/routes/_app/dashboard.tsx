@@ -14,6 +14,52 @@ import { unlockAudio, requestNotifyPermission, playSound, speak } from "@/lib/no
 import { toast } from "sonner";
 import { getTechBlogs, type BlogPost } from "@/server/tech-blogs.functions";
 
+// Client-side fallback: hit dev.to directly if server fn fails
+const TAG_MAP: Record<string, string[]> = {
+  conversion: ["conversion", "growth"], ai: ["ai", "machinelearning"], growth: ["growth", "startup"],
+  productivity: ["productivity", "career"], marketing: ["marketing", "seo"], webdev: ["webdev", "javascript"],
+  design: ["design", "ux"], freelance: ["freelance", "career"], career: ["career", "productivity"],
+  money: ["business", "freelance"], tools: ["tools", "productivity"], saas: ["saas", "startup"],
+  designer: ["design", "ux"], developer: ["webdev", "javascript"], writer: ["writing", "content"],
+  marketer: ["marketing", "growth"], consultant: ["business", "career"], analyst: ["data", "analytics"],
+  ecommerce: ["ecommerce", "shopify"], coach: ["productivity", "career"], photographer: ["creative"],
+  videographer: ["creative", "video"], podcaster: ["podcast"],
+};
+async function fetchBlogsClient(interests: string[], profession: string | null): Promise<BlogPost[]> {
+  const ids = [...interests, ...(profession ? [profession] : [])];
+  let tags = Array.from(new Set(ids.flatMap((id) => TAG_MAP[id] ?? [])));
+  if (tags.length === 0) tags = ["webdev", "productivity", "ai", "growth", "marketing"];
+  tags = tags.slice(0, 5);
+  const all: BlogPost[] = [];
+  const seen = new Set<string>();
+  await Promise.all(tags.map(async (tag) => {
+    try {
+      const r = await fetch(`https://dev.to/api/articles?tag=${encodeURIComponent(tag)}&per_page=6&top=14`);
+      if (!r.ok) return;
+      const json = await r.json() as any[];
+      for (const a of json) {
+        const url = a.url ?? a.canonical_url;
+        if (!url || seen.has(url)) continue;
+        seen.add(url);
+        all.push({
+          id: String(a.id),
+          title: a.title ?? "Untitled",
+          description: (a.description ?? "").slice(0, 220),
+          url,
+          cover: a.cover_image ?? a.social_image ?? null,
+          author: a.user?.name ?? "Unknown",
+          source: "dev.to",
+          tags: Array.isArray(a.tag_list) ? a.tag_list.slice(0, 3) : [],
+          publishedAt: a.published_at ?? new Date().toISOString(),
+          readingMinutes: Number(a.reading_time_minutes ?? 4),
+        });
+      }
+    } catch {}
+  }));
+  all.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+  return all.slice(0, 12);
+}
+
 export const Route = createFileRoute("/_app/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — Freelance OS" }] }),
   component: Dashboard,
@@ -69,10 +115,25 @@ function Dashboard() {
   useEffect(() => {
     if (loading) return; // wait for profile load to know interests
     setBlogsLoading(true);
-    getTechBlogs({ data: { interests, profession: profession ?? undefined } })
-      .then((r) => setBlogs(r.posts ?? []))
-      .catch(() => setBlogs([]))
-      .finally(() => setBlogsLoading(false));
+    let cancelled = false;
+    (async () => {
+      try {
+        const r = await getTechBlogs({ data: { interests, profession: profession ?? undefined } });
+        if (cancelled) return;
+        if (r.posts && r.posts.length > 0) {
+          setBlogs(r.posts);
+          setBlogsLoading(false);
+          return;
+        }
+      } catch {}
+      // Fallback: fetch from client
+      const posts = await fetchBlogsClient(interests, profession);
+      if (!cancelled) {
+        setBlogs(posts);
+        setBlogsLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
   }, [loading, profession, interests]);
 
   const now = new Date();
