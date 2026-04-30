@@ -137,7 +137,35 @@ export function ProjectDetailDialog({
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-2">
               <Stat icon={User2} label="Client" value={project.client_name ?? "—"} />
               <Stat icon={DollarSign} label="Price" value={`$${Number(project.price).toLocaleString()}`} />
-              <Stat icon={CalIcon} label="Deadline" value={project.deadline ? new Date(project.deadline).toLocaleDateString([], { month: "short", day: "numeric" }) : "—"} />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="rounded-xl bg-secondary/50 p-3 text-left hover:bg-secondary transition-colors group">
+                    <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">
+                      <CalIcon className="size-3" /> Deadline
+                      <Pencil className="size-2.5 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
+                    <div className="mt-1 font-semibold text-sm truncate">
+                      {project.deadline ? new Date(project.deadline).toLocaleDateString([], { month: "short", day: "numeric" }) : "Set date"}
+                    </div>
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 glass-strong border-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={project.deadline ? new Date(project.deadline) : undefined}
+                    onSelect={(d) => updateDeadline(d ?? undefined)}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                  {project.deadline && (
+                    <div className="p-2 border-t border-border">
+                      <Btn variant="ghost" size="sm" className="w-full" onClick={() => updateDeadline(undefined)}>
+                        Clear deadline
+                      </Btn>
+                    </div>
+                  )}
+                </PopoverContent>
+              </Popover>
               <Stat icon={Clock} label="Time left" value={hours !== null ? (hours < 24 ? `${hours}h` : `${Math.round(hours / 24)}d`) : "—"} />
             </div>
 
