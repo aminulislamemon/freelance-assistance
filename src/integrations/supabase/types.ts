@@ -48,21 +48,36 @@ export type Database = {
         Row: {
           created_at: string
           display_name: string | null
+          experience_level: string | null
+          expertise: string | null
           id: string
+          interests: string[] | null
+          onboarded: boolean
+          profession: string | null
           theme: string
           updated_at: string
         }
         Insert: {
           created_at?: string
           display_name?: string | null
+          experience_level?: string | null
+          expertise?: string | null
           id: string
+          interests?: string[] | null
+          onboarded?: boolean
+          profession?: string | null
           theme?: string
           updated_at?: string
         }
         Update: {
           created_at?: string
           display_name?: string | null
+          experience_level?: string | null
+          expertise?: string | null
           id?: string
+          interests?: string[] | null
+          onboarded?: boolean
+          profession?: string | null
           theme?: string
           updated_at?: string
         }
