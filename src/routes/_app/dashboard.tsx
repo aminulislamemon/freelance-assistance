@@ -249,15 +249,19 @@ function Dashboard() {
       </Card>
 
       {/* Tech Blogs */}
-      <Card className="glass border-0 p-6 animate-rise aurora-bg" style={{ animationDelay: "260ms" }}>
+      <Card className="glass border-0 p-4 sm:p-6 animate-rise aurora-bg" style={{ animationDelay: "260ms" }}>
         <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
           <div className="flex items-center gap-3">
             <div className="size-10 rounded-xl [background:var(--gradient-primary)] grid place-items-center shadow-[var(--shadow-glow)]">
               <Newspaper className="size-5 text-primary-foreground" />
             </div>
             <div>
-              <h2 className="font-semibold text-lg">Fresh tech & conversion blogs</h2>
-              <p className="text-xs text-muted-foreground mt-0.5">Curated daily — analytics, growth, AI, web dev</p>
+              <h2 className="font-semibold text-base sm:text-lg">Fresh blogs for you</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {interests.length > 0
+                  ? `Curated for: ${interests.slice(0, 3).join(", ")}${interests.length > 3 ? "…" : ""}`
+                  : "Curated daily — analytics, growth, AI, web dev"}
+              </p>
             </div>
           </div>
           <Button variant="glass" size="sm" onClick={() => {
