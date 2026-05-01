@@ -2,7 +2,7 @@ import { Link, Outlet, useRouterState, useNavigate } from "@tanstack/react-route
 import { useEffect, useState } from "react";
 import {
   LayoutDashboard, FolderKanban, CalendarDays, BarChart3, Bot, Settings,
-  Sparkles, LogOut, Sun, Moon, Bell, Menu, X, Calendar,
+  Sparkles, LogOut, Sun, Moon, Bell, Menu, X, Calendar, MessageSquareText, Shield,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
@@ -12,9 +12,14 @@ import { useNotifier } from "@/hooks/use-notifier";
 import { unlockAudio, requestNotifyPermission } from "@/lib/notifications";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useActivityTracker } from "@/hooks/use-track";
+import { useIsAdmin } from "@/hooks/use-admin";
+import { FeedbackButton } from "@/components/feedback/feedback-button";
 
-const items = [
+// Lifecycle-driven nav: Dashboard → Leads → Projects → Calendar/Meetings → Revenue → AI → Settings
+const baseItems = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/leads", label: "Leads", icon: MessageSquareText },
   { to: "/projects", label: "Projects", icon: FolderKanban },
   { to: "/calendar", label: "Calendar", icon: Calendar },
   { to: "/meetings", label: "Meetings", icon: CalendarDays },
@@ -32,6 +37,12 @@ export function AppShell() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [checkingProfile, setCheckingProfile] = useState(true);
   useNotifier();
+  useActivityTracker();
+  const { isAdmin } = useIsAdmin();
+
+  const items = isAdmin
+    ? [...baseItems.slice(0, -1), { to: "/admin", label: "Admin", icon: Shield } as const, baseItems[baseItems.length - 1]]
+    : baseItems;
 
   useEffect(() => {
     if (!loading && !user) nav({ to: "/auth" });
@@ -219,6 +230,7 @@ export function AppShell() {
         <main className="flex-1 px-3 sm:px-6 lg:px-8 py-4 sm:py-6 pb-28 md:pb-8">
           <Outlet />
         </main>
+        <FeedbackButton floating />
       </div>
     </div>
   );
