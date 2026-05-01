@@ -14,12 +14,149 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_emails: {
+        Row: {
+          created_at: string
+          email: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+        }
+        Relationships: []
+      }
+      deals: {
+        Row: {
+          agreed_price: number
+          client_name: string | null
+          created_at: string
+          id: string
+          lead_id: string | null
+          platform: Database["public"]["Enums"]["platform"]
+          scope: string | null
+          status: Database["public"]["Enums"]["deal_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agreed_price?: number
+          client_name?: string | null
+          created_at?: string
+          id?: string
+          lead_id?: string | null
+          platform?: Database["public"]["Enums"]["platform"]
+          scope?: string | null
+          status?: Database["public"]["Enums"]["deal_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agreed_price?: number
+          client_name?: string | null
+          created_at?: string
+          id?: string
+          lead_id?: string | null
+          platform?: Database["public"]["Enums"]["platform"]
+          scope?: string | null
+          status?: Database["public"]["Enums"]["deal_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deals_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      feedback: {
+        Row: {
+          admin_notes: string | null
+          admin_status: Database["public"]["Enums"]["feedback_status"]
+          created_at: string
+          feedback_type: Database["public"]["Enums"]["feedback_type"]
+          id: string
+          message: string
+          rating: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          admin_status?: Database["public"]["Enums"]["feedback_status"]
+          created_at?: string
+          feedback_type?: Database["public"]["Enums"]["feedback_type"]
+          id?: string
+          message: string
+          rating: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          admin_status?: Database["public"]["Enums"]["feedback_status"]
+          created_at?: string
+          feedback_type?: Database["public"]["Enums"]["feedback_type"]
+          id?: string
+          message?: string
+          rating?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      leads: {
+        Row: {
+          client_name: string
+          created_at: string
+          estimated_value: number | null
+          id: string
+          notes: string | null
+          source: Database["public"]["Enums"]["lead_source"]
+          status: Database["public"]["Enums"]["lead_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          client_name: string
+          created_at?: string
+          estimated_value?: number | null
+          id?: string
+          notes?: string | null
+          source?: Database["public"]["Enums"]["lead_source"]
+          status?: Database["public"]["Enums"]["lead_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          client_name?: string
+          created_at?: string
+          estimated_value?: number | null
+          id?: string
+          notes?: string | null
+          source?: Database["public"]["Enums"]["lead_source"]
+          status?: Database["public"]["Enums"]["lead_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       meetings: {
         Row: {
           client_name: string | null
           created_at: string
           id: string
+          lead_id: string | null
+          meeting_type: Database["public"]["Enums"]["meeting_type"]
           notes: string | null
+          project_id: string | null
           starts_at: string
           title: string
           user_id: string
@@ -28,7 +165,10 @@ export type Database = {
           client_name?: string | null
           created_at?: string
           id?: string
+          lead_id?: string | null
+          meeting_type?: Database["public"]["Enums"]["meeting_type"]
           notes?: string | null
+          project_id?: string | null
           starts_at: string
           title: string
           user_id: string
@@ -37,47 +177,83 @@ export type Database = {
           client_name?: string | null
           created_at?: string
           id?: string
+          lead_id?: string | null
+          meeting_type?: Database["public"]["Enums"]["meeting_type"]
           notes?: string | null
+          project_id?: string | null
           starts_at?: string
           title?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "meetings_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meetings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
+          ai_uses_count: number
           created_at: string
+          deleted_at: string | null
           display_name: string | null
           experience_level: string | null
           expertise: string | null
           id: string
           interests: string[] | null
+          last_active_at: string | null
+          leads_count: number
+          meetings_count: number
           onboarded: boolean
           profession: string | null
+          projects_count: number
           theme: string
           updated_at: string
         }
         Insert: {
+          ai_uses_count?: number
           created_at?: string
+          deleted_at?: string | null
           display_name?: string | null
           experience_level?: string | null
           expertise?: string | null
           id: string
           interests?: string[] | null
+          last_active_at?: string | null
+          leads_count?: number
+          meetings_count?: number
           onboarded?: boolean
           profession?: string | null
+          projects_count?: number
           theme?: string
           updated_at?: string
         }
         Update: {
+          ai_uses_count?: number
           created_at?: string
+          deleted_at?: string | null
           display_name?: string | null
           experience_level?: string | null
           expertise?: string | null
           id?: string
           interests?: string[] | null
+          last_active_at?: string | null
+          leads_count?: number
+          meetings_count?: number
           onboarded?: boolean
           profession?: string | null
+          projects_count?: number
           theme?: string
           updated_at?: string
         }
@@ -89,8 +265,11 @@ export type Database = {
           completed_at: string | null
           created_at: string
           deadline: string | null
+          deal_id: string | null
           description: string | null
           id: string
+          lead_id: string | null
+          platform: Database["public"]["Enums"]["platform"]
           price: number
           status: Database["public"]["Enums"]["project_status"]
           title: string
@@ -102,8 +281,11 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           deadline?: string | null
+          deal_id?: string | null
           description?: string | null
           id?: string
+          lead_id?: string | null
+          platform?: Database["public"]["Enums"]["platform"]
           price?: number
           status?: Database["public"]["Enums"]["project_status"]
           title: string
@@ -115,15 +297,33 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           deadline?: string | null
+          deal_id?: string | null
           description?: string | null
           id?: string
+          lead_id?: string | null
+          platform?: Database["public"]["Enums"]["platform"]
           price?: number
           status?: Database["public"]["Enums"]["project_status"]
           title?: string
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "projects_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tasks: {
         Row: {
@@ -163,15 +363,83 @@ export type Database = {
           },
         ]
       }
+      user_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          metadata: Json | null
+          page: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          page?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          page?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      project_status: "pending" | "in_progress" | "completed" | "cancelled"
+      app_role: "admin" | "user"
+      deal_status: "open" | "won" | "lost"
+      feedback_status: "new" | "reviewed" | "planned" | "completed"
+      feedback_type: "bug" | "feature" | "general"
+      lead_source: "fiverr" | "upwork" | "direct" | "referral" | "other"
+      lead_status: "new" | "negotiating" | "won" | "lost"
+      meeting_type: "lead" | "project" | "general"
+      platform: "fiverr" | "upwork" | "direct" | "other"
+      project_status:
+        | "pending"
+        | "in_progress"
+        | "completed"
+        | "cancelled"
+        | "active"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -299,7 +567,21 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      project_status: ["pending", "in_progress", "completed", "cancelled"],
+      app_role: ["admin", "user"],
+      deal_status: ["open", "won", "lost"],
+      feedback_status: ["new", "reviewed", "planned", "completed"],
+      feedback_type: ["bug", "feature", "general"],
+      lead_source: ["fiverr", "upwork", "direct", "referral", "other"],
+      lead_status: ["new", "negotiating", "won", "lost"],
+      meeting_type: ["lead", "project", "general"],
+      platform: ["fiverr", "upwork", "direct", "other"],
+      project_status: [
+        "pending",
+        "in_progress",
+        "completed",
+        "cancelled",
+        "active",
+      ],
     },
   },
 } as const
