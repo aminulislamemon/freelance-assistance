@@ -21,18 +21,27 @@ function AssistantPage() {
   const analyze = async () => {
     setLoading(true);
     try {
-      const [{ data: projects }, { data: meetings }] = await Promise.all([
-        supabase.from("projects").select("title,status,price,deadline,completed_at"),
+      const [{ data: projects }, { data: meetings }, { data: leads }, { data: deals }] = await Promise.all([
+        supabase.from("projects").select("title,status,price,deadline,completed_at,client_name,platform"),
         supabase.from("meetings").select("title,client_name,starts_at").gte("starts_at", new Date().toISOString()).limit(10),
+        supabase.from("leads").select("client_name,source,status,estimated_value,created_at"),
+        supabase.from("deals").select("client_name,platform,agreed_price,status,created_at"),
       ]);
 
       const now = new Date();
       const thisMonth = (projects ?? []).filter((p: any) => p.status === "completed" && p.completed_at && new Date(p.completed_at).getMonth() === now.getMonth()).reduce((s: number, p: any) => s + Number(p.price), 0);
       const lastMonth = (projects ?? []).filter((p: any) => p.status === "completed" && p.completed_at && new Date(p.completed_at).getMonth() === now.getMonth() - 1).reduce((s: number, p: any) => s + Number(p.price), 0);
-      const stats = { thisMonth, lastMonth, active: (projects ?? []).filter((p: any) => p.status !== "completed").length };
+      const openPipeline = (deals ?? []).filter((d: any) => d.status === "open").reduce((s: number, d: any) => s + Number(d.agreed_price), 0);
+      const stats = {
+        thisMonth, lastMonth,
+        active: (projects ?? []).filter((p: any) => p.status !== "completed").length,
+        leadsCount: (leads ?? []).length,
+        openDeals: (deals ?? []).filter((d: any) => d.status === "open").length,
+        openPipeline,
+      };
 
       const { data, error } = await supabase.functions.invoke("ai-assistant", {
-        body: { stats, projects, meetings },
+        body: { stats, projects, meetings, leads, deals },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);

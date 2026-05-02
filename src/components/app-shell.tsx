@@ -2,7 +2,7 @@ import { Link, Outlet, useRouterState, useNavigate } from "@tanstack/react-route
 import { useEffect, useState } from "react";
 import {
   LayoutDashboard, FolderKanban, CalendarDays, BarChart3, Bot, Settings,
-  Sparkles, LogOut, Sun, Moon, Bell, Menu, X, Calendar, MessageSquareText, Shield,
+  Sparkles, LogOut, Sun, Moon, Bell, Menu, X, Calendar, MessageSquareText, Shield, Handshake,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
@@ -20,6 +20,7 @@ import { FeedbackButton } from "@/components/feedback/feedback-button";
 const baseItems = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/leads", label: "Leads", icon: MessageSquareText },
+  { to: "/deals", label: "Deals", icon: Handshake },
   { to: "/projects", label: "Projects", icon: FolderKanban },
   { to: "/calendar", label: "Calendar", icon: Calendar },
   { to: "/meetings", label: "Meetings", icon: CalendarDays },
