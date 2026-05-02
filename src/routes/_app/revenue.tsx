@@ -15,11 +15,16 @@ export const Route = createFileRoute("/_app/revenue")({
 });
 
 type Project = { id: string; title: string; client_name: string | null; price: number; status: string; completed_at: string | null; created_at: string };
+type Deal = { id: string; agreed_price: number; status: string };
 
 function RevenuePage() {
   const [projects, setProjects] = useState<Project[]>([]);
+  const [deals, setDeals] = useState<Deal[]>([]);
   const [sort, setSort] = useState<"price" | "recent">("price");
-  useEffect(() => { supabase.from("projects").select("*").then(({ data }) => setProjects((data as Project[]) ?? [])); }, []);
+  useEffect(() => {
+    supabase.from("projects").select("*").then(({ data }) => setProjects((data as Project[]) ?? []));
+    supabase.from("deals").select("id,agreed_price,status").then(({ data }) => setDeals((data as Deal[]) ?? []));
+  }, []);
 
   const months = useMemo(() => {
     const arr: { key: string; label: string; total: number; count: number; cumulative: number }[] = [];
@@ -49,6 +54,7 @@ function RevenuePage() {
   const allTime = projects.filter(p => p.status === "completed").reduce((s, p) => s + Number(p.price), 0);
   const avgMonth = months.reduce((s, m) => s + m.total, 0) / months.length;
   const peak = months.reduce((a, b) => (b.total > a.total ? b : a), months[0]);
+  const openPipeline = deals.filter(d => d.status === "open").reduce((s, d) => s + Number(d.agreed_price), 0);
 
   const completed = projects.filter(p => p.status === "completed");
   const sorted = [...completed].sort((a, b) =>
@@ -74,7 +80,8 @@ function RevenuePage() {
             {growth >= 0 ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />}
             {growth.toFixed(1)}% vs last month
           </span>} delay={0} />
-        <StatTile label="Last month" value={lastMonth} icon={DollarSign} accent="from-[--accent-emerald] to-[--primary]" delay={60} />
+        <StatTile label="Open pipeline" value={openPipeline} icon={DollarSign} accent="from-[--accent-emerald] to-[--primary]"
+          extra={<span className="text-xs text-muted-foreground">{deals.filter(d=>d.status==="open").length} deals waiting</span>} delay={60} />
         <StatTile label="6-mo average" value={Math.round(avgMonth)} icon={TrendingUp} accent="from-[--primary-glow] to-[--accent-emerald]" delay={120} />
         <StatTile label="All time" value={allTime} icon={Trophy} accent="from-[--primary] to-[--accent-emerald]"
           extra={peak.total > 0 ? <span className="text-xs text-muted-foreground">Peak: {peak.label} ${peak.total.toLocaleString()}</span> : undefined} delay={180} />
