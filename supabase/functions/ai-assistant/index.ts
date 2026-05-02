@@ -10,7 +10,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { stats, projects, meetings } = await req.json();
+    const { stats, projects, meetings, leads, deals } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not set");
 
@@ -44,13 +44,13 @@ Rules:
 - Use **bold** for emphasis, \`inline code\` for tools/metrics, and > blockquotes for one memorable quote.
 - Keep it energetic, professional, no fluff. No apologies. No "as an AI".`;
 
-    const user = `Analyse this freelancer's dashboard and produce the strategy report.
+    const user = `Analyse this freelancer's full lifecycle (leads → deals → projects → revenue) and produce the strategy report.
 
 \`\`\`json
-${JSON.stringify({ stats, projects, meetings }, null, 2)}
+${JSON.stringify({ stats, leads, deals, projects, meetings }, null, 2)}
 \`\`\`
 
-Generate the full markdown report now.`;
+Use the lead funnel and open deal pipeline (not just completed revenue) to diagnose where they are losing momentum. Generate the full markdown report now.`;
 
     const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
